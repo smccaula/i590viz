@@ -15,7 +15,7 @@
 </div>
     
 <div align="center" style="position: relative; width: 800px; height: 30px;">
-    <label id="displayDate">July, 2007</label>
+    <label id="displayDate">July 2007</label>
     &nbsp;
     &nbsp;
     <label>losses: </label>
@@ -32,25 +32,27 @@
         ctx.fillStyle = grd;
         ctx.fillRect(0,0,400,20);
     </script>
+    &nbsp;
+    <input type="button" onclick="toggleRange()" value="range">
+    &nbsp;
+    <input type="button" onclick="toggleBand()" value="cheat">
     
 </div> 
     
 <div  align="center" id="demo" style="position: relative; width: 800px; height: 60px;">
     <label>from: </label>
-    <input id=fdate type=date min=2007-07-01 max=2009-06-30 value=2008-10-01>
+    <input id=fdate type=date min=2007-07-01 max=2009-06-30 value=2007-07-01>
     &nbsp;
     <label>to: </label>
-    <input id=tdate type=date min=2007-07-01 max=2009-06-30 value=2008-10-31>
+    <input id=tdate type=date min=2007-07-01 max=2009-06-30 value=2009-06-30>
     &nbsp;
     <label>faster: </label>
-    <input id="slider1" name="slider1" type="range" min="1" max="60" value="30" step="1" />
+    <input id="slider1" name="slider1" type="range" min="1" max="120" value="60" step="1" />
     <label>slower: </label>
     &nbsp;
     <input type="button" onclick="goButton()" value="start">
     &nbsp;
     <input type="button" onclick="clearInterval(myVar)" value="stop">
-    &nbsp;
-    <input type="button" onclick="xData()" value="test">
 </div>  
     
 <script>
@@ -59,7 +61,7 @@
             defaultFill: '#808080' 
         },
         geographyConfig: {
-            borderColor: '#808080',
+            borderColor: '#000000',
             highlightOnHover: false,
             popupOnHover: false
         }                   
@@ -73,10 +75,13 @@
     clearInterval(myVar);
     var upSound = new Audio("up.wav"); // buffers automatically when created
     var downSound = new Audio("down.wav"); // buffers automatically when created
+    var defaultBand = 5;
     var tzDisplay = 24;
     var xCountries = 175;
-    var xTradingDays = 541;
+    var xTradingDays = 519;
     var tradingDay = 0;
+    var startDay = 0;
+    var lastDay = 519;
     var savedBand = 0;
     var grayValues = ['#F8F8F8','#E0E0E0','#C8C8C8','#B0B0B0','#989898','#808080','#686868','#505050','#383838','#202020','#080808'];
     var valuesArray = new Array(xCountries);
@@ -85,10 +90,13 @@
   }
   for (var i = 0; i < xCountries; i++) {
     for (var j = 0; j < xTradingDays; j++) {
-        valuesArray[i][j] = 5;
+        valuesArray[i][j] = defaultBand;
     }
   }
     var dayValues = new Array(xTradingDays);
+    
+    xData();
+    toggleRange();
     
     function xData() {
         var xctry = 0;
@@ -115,24 +123,55 @@
         
 function goButton() {
     tzDisplay = 24;
-    tradingDay = 0;
+    tradingDay = startDay;
     val= document.getElementById("slider1");
     myVar=setInterval(function(){myTimer()},val.value);    
+}
+    
+function toggleBand() {
+    if (defaultBand == 5) {
+        defaultBand = -1;
+    } else {
+        defaultBand = 5;
+    }   
+  for (var i = 0; i < xCountries; i++) {
+    for (var j = 0; j < xTradingDays; j++) {
+        valuesArray[i][j] = defaultBand;
+    }
+  }
+    
+    xData();    
+}
+    
+function toggleRange() {
+ if (startDay == 0) {
+     startDay = 304;
+     lastDay = 348;
+     document.getElementById("fdate").value = "2008-09-01";
+     document.getElementById("tdate").value = "2008-10-31";
+     document.getElementById("displayDate").innerHTML = "September 2008";
+ } else
+ {
+     startDay = 0;
+     lastDay = 519;
+     document.getElementById("fdate").value = "2007-07-01";
+     document.getElementById("tdate").value = "2009-06-30";
+     document.getElementById("displayDate").innerHTML = "July 2008";     
+ }    
 }
    
 function getDailyValue(ctry,tday) {
     var dvx = valuesArray[ctry][tday];
-//    if (dvx < 0) {
-//        valuesArray[ctry][tday]  = savedBand;
-//    }
-//    savedBand = valuesArray[ctry][tday];
-    
-    if (dvx < 1)  {
-        downSound.play();
+    if (dvx < 0) {
+        dvx  = valuesArray[0][tday];
     }
-    if (dvx > 9)  {
-        upSound.play();
-    }    
+    
+//    if (dvx < 1)  {
+//        downSound.play();
+//    }
+//    if (dvx > 9)  {
+//        upSound.play();
+//    }    
     return(dvx);
 }
     
@@ -362,7 +401,7 @@ function zone6() {
 
         
 function myTimer() {
-    var d = new Date();
+ //   var d = new Date();
     document.getElementById("displayDate").innerHTML = dayValues[tradingDay];
 
  //   document.getElementById("demo").innerHTML = d.toLocaleTimeString();
@@ -457,7 +496,7 @@ function myTimer() {
         case 1:
             tzDisplay = 24;
             tradingDay++;
-            if (tradingDay >= 519) {
+            if (tradingDay >= lastDay) {
                 clearInterval(myVar);
     }
             break;
