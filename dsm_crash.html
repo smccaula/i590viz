@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+    <title>great recession</title>
+    <h3 align="center">Daily Activity of Major Market Indices</h3>
+</head>
+
+<body>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="datamaps.world.min.js"></script>
+<div align="center" id="container" style="position: relative; width: 800px; height: 400px;">
+</div>
+    
+<div align="center" style="position: relative; width: 800px; height: 30px;">
+    <label id="displayDate">July, 2007</label>
+    &nbsp;
+    &nbsp;
+    <label>losses: </label>
+    <canvas id="myCanvas" width="400" height="20"
+            style="border:1px solid #d3d3d3;">
+    </canvas>
+    <label>:gains </label>
+    <script>
+        var c = document.getElementById("myCanvas");
+        var ctx = c.getContext("2d");
+        var grd = ctx.createLinearGradient(0,0,400,20);
+        grd.addColorStop(0,"white");
+        grd.addColorStop(1,"black");
+        ctx.fillStyle = grd;
+        ctx.fillRect(0,0,400,20);
+    </script>
+    
+</div> 
+    
+<div  align="center" id="demo" style="position: relative; width: 800px; height: 60px;">
+    <label>from: </label>
+    <input id=fdate type=date min=2007-07-01 max=2009-06-30 value=2007-07-01>
+    &nbsp;
+    <label>to: </label>
+    <input id=tdate type=date min=2007-07-01 max=2009-06-30 value=2009-06-30>
+    &nbsp;
+    <label>faster: </label>
+    <input id="slider1" name="slider1" type="range" min="1" max="60" value="30" step="1" />
+    <label>slower: </label>
+    &nbsp;
+    <input type="button" onclick="goButton()" value="start">
+    &nbsp;
+    <input type="button" onclick="clearInterval(myVar)" value="stop">
+    &nbsp;
+    <input type="button" onclick="xData()" value="test">
+</div>  
+    
+<script>
+    var map = new Datamap({element: document.getElementById('container'),
+        fills: {
+            defaultFill: '#808080' 
+        },
+        geographyConfig: {
+            borderColor: '#808080',
+            highlightOnHover: false,
+            popupOnHover: false
+        }                   
+    });
+
+</script>
+    
+     
+<script>
+    var myVar=setInterval(function(){myTimer()},20);
+    clearInterval(myVar);
+    var upSound = new Audio("up.wav"); // buffers automatically when created
+    var downSound = new Audio("down.wav"); // buffers automatically when created
+    var tzDisplay = 24;
+    var xCountries = 175;
+    var xTradingDays = 541;
+    var tradingDay = 0;
+    var savedBand = 0;
+    var grayValues = ['#080808','#202020','#383838','#505050','#686868','#808080','#989898','#B0B0B0','#C8C8C8','#E0E0E0','#F8F8F8'];
+    var valuesArray = new Array(xCountries);
+  for (var i = 0; i < xCountries; i++) {
+    valuesArray[i] = new Array(xTradingDays);
+  }
+  for (var i = 0; i < xCountries; i++) {
+    for (var j = 0; j < xTradingDays; j++) {
+        valuesArray[i][j] = -1;
+    }
+  }
+    var dayValues = new Array(xTradingDays);
+    
+    function xData() {
+        var xctry = 0;
+        var xtday = 0;
+        var xdiff = 0.0;
+        var xband = -1;
+        var xctr = 0;
+         d3.csv("alldata.csv", function(alldata)
+        {
+            console.log("alldata:", alldata);
+            data = alldata.map(function(d)
+            {
+                xctr++;
+            //each d is one line of the csv file represented as a json object
+                xctry = d.ctry;
+                xtday = d.tday;
+                xdiff = d.diff;
+                xband = d.band;
+                dayValues[xtday] = d.date;
+                document.getElementById("displayDate").innerHTML = xtday;
+                valuesArray[xctry][xtday] = xband;
+            })
+        })
+    }
+        
+function goButton() {
+    tzDisplay = 24;
+    tradingDay = 0;
+    val= document.getElementById("slider1");
+    myVar=setInterval(function(){myTimer()},val.value);    
+}
+   
+function getDailyValue(ctry,tday) {
+    var dvx = valuesArray[ctry][tday];
+    if (dvx < 0) {
+        valuesArray[ctry][tday]  = savedBand;
+    }
+    savedBand = valuesArray[ctry][tday];
+    
+    if (dvx < 1)  {
+        downSound.play();
+    }
+    if (dvx > 9)  {
+        upSound.play();
+    }    
+    return(dvx);
+}
+    
+function zone24() {
+   map.updateChoropleth({"FJI": grayValues[getDailyValue(1,tradingDay)] });  
+   map.updateChoropleth({"NZL": grayValues[getDailyValue(2,tradingDay)] });  
+}
+    
+function zone23() {
+   map.updateChoropleth({"NCL": grayValues[getDailyValue(3,tradingDay)] });  
+   map.updateChoropleth({"SLB": grayValues[getDailyValue(4,tradingDay)] });  
+   map.updateChoropleth({"VUT": grayValues[getDailyValue(5,tradingDay)] });  
+}
+
+function zone22() {
+   map.updateChoropleth({"AUS": grayValues[getDailyValue(6,1)] });  
+   map.updateChoropleth({"PNG": grayValues[getDailyValue(7,tradingDay)] });  
+}
+    
+function zone21() {
+   map.updateChoropleth({"TLS": grayValues[getDailyValue(8,tradingDay)] });  
+   map.updateChoropleth({"JPN": grayValues[getDailyValue(9,tradingDay)] });  
+   map.updateChoropleth({"PRK": grayValues[getDailyValue(10,tradingDay)] });  
+   map.updateChoropleth({"KOR": grayValues[getDailyValue(11,tradingDay)] });  
+}
+
+function zone20() {
+   map.updateChoropleth({"BRN": grayValues[getDailyValue(12,tradingDay)] });  
+   map.updateChoropleth({"CHN": grayValues[getDailyValue(13,tradingDay)] });  
+   map.updateChoropleth({"MYS": grayValues[getDailyValue(14,tradingDay)] });  
+   map.updateChoropleth({"MNG": grayValues[getDailyValue(15,tradingDay)] });  
+   map.updateChoropleth({"PHL": grayValues[getDailyValue(16,tradingDay)] });  
+   map.updateChoropleth({"TWN": grayValues[getDailyValue(17,tradingDay)] });  
+}
+ 
+function zone19() {
+   map.updateChoropleth({"KMH": grayValues[getDailyValue(18,tradingDay)] });  
+   map.updateChoropleth({"IDN": grayValues[getDailyValue(19,tradingDay)] });  
+   map.updateChoropleth({"LAO": grayValues[getDailyValue(20,tradingDay)] });  
+   map.updateChoropleth({"THA": grayValues[getDailyValue(21,tradingDay)] });  
+   map.updateChoropleth({"VNM": grayValues[getDailyValue(22,tradingDay)] });  
+   map.updateChoropleth({"MMR": grayValues[getDailyValue(23,tradingDay)] });  
+}
+    
+function zone18() {
+   map.updateChoropleth({"BGD": grayValues[getDailyValue(24,tradingDay)] });  
+   map.updateChoropleth({"BTN": grayValues[getDailyValue(25,tradingDay)] });  
+   map.updateChoropleth({"IND": grayValues[getDailyValue(26,tradingDay)] });  
+   map.updateChoropleth({"KAZ": grayValues[getDailyValue(27,tradingDay)] });  
+   map.updateChoropleth({"KGZ": grayValues[getDailyValue(28,tradingDay)] });  
+   map.updateChoropleth({"NPL": grayValues[getDailyValue(29,tradingDay)] });  
+   map.updateChoropleth({"LKA": grayValues[getDailyValue(30,tradingDay)] });  
+}
+    
+function zone17() {
+   map.updateChoropleth({"AFG": grayValues[getDailyValue(31,tradingDay)] });  
+   map.updateChoropleth({"PAK": grayValues[getDailyValue(32,tradingDay)] });  
+   map.updateChoropleth({"TJK": grayValues[getDailyValue(33,tradingDay)] });  
+   map.updateChoropleth({"UZB": grayValues[getDailyValue(34,tradingDay)] });  
+}
+
+function zone16() {
+   map.updateChoropleth({"ARM": grayValues[getDailyValue(35,tradingDay)] });  
+   map.updateChoropleth({"AZE": grayValues[getDailyValue(36,tradingDay)] });  
+   map.updateChoropleth({"GEO": grayValues[getDailyValue(37,tradingDay)] });  
+   map.updateChoropleth({"IRN": grayValues[getDailyValue(38,tradingDay)] });  
+   map.updateChoropleth({"OMN": grayValues[getDailyValue(39,tradingDay)] });  
+   map.updateChoropleth({"ARE": grayValues[getDailyValue(40,tradingDay)] });  
+}
+    
+function zone15() {
+   map.updateChoropleth({"BLR": grayValues[getDailyValue(41,tradingDay)] });  
+   map.updateChoropleth({"DJI": grayValues[getDailyValue(42,tradingDay)] });  
+   map.updateChoropleth({"ERI": grayValues[getDailyValue(43,tradingDay)] });  
+   map.updateChoropleth({"ETH": grayValues[getDailyValue(44,tradingDay)] });  
+   map.updateChoropleth({"IRQ": grayValues[getDailyValue(45,tradingDay)] });  
+   map.updateChoropleth({"JOR": grayValues[getDailyValue(46,tradingDay)] });  
+   map.updateChoropleth({"KEN": grayValues[getDailyValue(47,tradingDay)] });  
+   map.updateChoropleth({"KWT": grayValues[getDailyValue(48,tradingDay)] });  
+   map.updateChoropleth({"MDG": grayValues[getDailyValue(49,tradingDay)] });  
+   map.updateChoropleth({"QAT": grayValues[getDailyValue(50,tradingDay)] });  
+   map.updateChoropleth({"RUS": grayValues[getDailyValue(51,tradingDay)] });  
+   map.updateChoropleth({"SAU": grayValues[getDailyValue(52,tradingDay)] });  
+   map.updateChoropleth({"SOM": grayValues[getDailyValue(173,tradingDay)] });  
+   map.updateChoropleth({"SSD": grayValues[getDailyValue(53,tradingDay)] });  
+   map.updateChoropleth({"SDN": grayValues[getDailyValue(54,tradingDay)] });  
+   map.updateChoropleth({"TZA": grayValues[getDailyValue(55,tradingDay)] });  
+   map.updateChoropleth({"BLR": grayValues[getDailyValue(56,tradingDay)] });  
+   map.updateChoropleth({"UGA": grayValues[getDailyValue(57,tradingDay)] });  
+   map.updateChoropleth({"YEM": grayValues[getDailyValue(58,tradingDay)] });  
+}
+
+function zone14() {
+   map.updateChoropleth({"BWA": grayValues[getDailyValue(59,tradingDay)] });  
+   map.updateChoropleth({"BGR": grayValues[getDailyValue(60,tradingDay)] });  
+   map.updateChoropleth({"BDI": grayValues[getDailyValue(61,tradingDay)] });  
+   map.updateChoropleth({"CYP": grayValues[getDailyValue(62,tradingDay)] });  
+   map.updateChoropleth({"GRC": grayValues[getDailyValue(63,tradingDay)] });  
+   map.updateChoropleth({"BGR": grayValues[getDailyValue(60,tradingDay)] });  
+   map.updateChoropleth({"COD": grayValues[getDailyValue(169,tradingDay)] });  
+   map.updateChoropleth({"EGY": grayValues[getDailyValue(170,tradingDay)] });  
+   map.updateChoropleth({"EST": grayValues[getDailyValue(171,tradingDay)] });  
+   map.updateChoropleth({"FIN": grayValues[getDailyValue(172,tradingDay)] });  
+   map.updateChoropleth({"LVA": grayValues[getDailyValue(65,tradingDay)] });  
+   map.updateChoropleth({"LBN": grayValues[getDailyValue(66,tradingDay)] });  
+   map.updateChoropleth({"LSO": grayValues[getDailyValue(67,tradingDay)] });  
+   map.updateChoropleth({"LTU": grayValues[getDailyValue(68,tradingDay)] });  
+   map.updateChoropleth({"MWI": grayValues[getDailyValue(69,tradingDay)] });  
+   map.updateChoropleth({"MDA": grayValues[getDailyValue(70,tradingDay)] });  
+   map.updateChoropleth({"MOZ": grayValues[getDailyValue(71,tradingDay)] });  
+   map.updateChoropleth({"RWA": grayValues[getDailyValue(72,tradingDay)] });  
+   map.updateChoropleth({"ROU": grayValues[getDailyValue(73,tradingDay)] });  
+   map.updateChoropleth({"ZAF": grayValues[getDailyValue(74,tradingDay)] });  
+   map.updateChoropleth({"SWZ": grayValues[getDailyValue(75,tradingDay)] });  
+   map.updateChoropleth({"SYR": grayValues[getDailyValue(76,tradingDay)] });  
+   map.updateChoropleth({"TUR": grayValues[getDailyValue(77,tradingDay)] });  
+   map.updateChoropleth({"UKR": grayValues[getDailyValue(78,tradingDay)] });  
+   map.updateChoropleth({"PSE": grayValues[getDailyValue(79,tradingDay)] });  
+   map.updateChoropleth({"ZMB": grayValues[getDailyValue(80,tradingDay)] });  
+   map.updateChoropleth({"ZWE": grayValues[getDailyValue(81,tradingDay)] });  
+}
+    
+function zone13() {
+   map.updateChoropleth({"ALB": grayValues[getDailyValue(82,tradingDay)] });  
+   map.updateChoropleth({"DZA": grayValues[getDailyValue(83,tradingDay)] });  
+   map.updateChoropleth({"AGO": grayValues[getDailyValue(84,tradingDay)] });  
+   map.updateChoropleth({"AUT": grayValues[getDailyValue(85,tradingDay)] });  
+   map.updateChoropleth({"BEL": grayValues[getDailyValue(86,tradingDay)] });  
+   map.updateChoropleth({"BEN": grayValues[getDailyValue(87,tradingDay)] });  
+   map.updateChoropleth({"BIH": grayValues[getDailyValue(88,tradingDay)] });  
+   map.updateChoropleth({"CMR": grayValues[getDailyValue(89,tradingDay)] });  
+   map.updateChoropleth({"CAF": grayValues[getDailyValue(90,tradingDay)] });  
+   map.updateChoropleth({"TCD": grayValues[getDailyValue(91,tradingDay)] });  
+   map.updateChoropleth({"COG": grayValues[getDailyValue(92,tradingDay)] });  
+   map.updateChoropleth({"HRV": grayValues[getDailyValue(93,tradingDay)] });  
+   map.updateChoropleth({"CZE": grayValues[getDailyValue(94,tradingDay)] });  
+   map.updateChoropleth({"DNK": grayValues[getDailyValue(95,tradingDay)] });  
+   map.updateChoropleth({"GNQ": grayValues[getDailyValue(96,tradingDay)] });  
+   map.updateChoropleth({"FRA": grayValues[getDailyValue(97,tradingDay)] });  
+   map.updateChoropleth({"GAB": grayValues[getDailyValue(98,tradingDay)] });  
+   map.updateChoropleth({"DEU": grayValues[getDailyValue(99,tradingDay)] });  
+   map.updateChoropleth({"HUN": grayValues[getDailyValue(100,tradingDay)] });  
+   map.updateChoropleth({"ITA": grayValues[getDailyValue(101,tradingDay)] });  
+   map.updateChoropleth({"LBY": grayValues[getDailyValue(102,tradingDay)] });  
+   map.updateChoropleth({"LUX": grayValues[getDailyValue(103,tradingDay)] });  
+   map.updateChoropleth({"MKD": grayValues[getDailyValue(104,tradingDay)] });  
+   map.updateChoropleth({"MNE": grayValues[getDailyValue(105,tradingDay)] });  
+   map.updateChoropleth({"NAM": grayValues[getDailyValue(106,tradingDay)] });  
+   map.updateChoropleth({"NLD": grayValues[getDailyValue(107,tradingDay)] });  
+   map.updateChoropleth({"NER": grayValues[getDailyValue(108,tradingDay)] });  
+   map.updateChoropleth({"NGA": grayValues[getDailyValue(109,tradingDay)] });  
+   map.updateChoropleth({"NOR": grayValues[getDailyValue(110,tradingDay)] });  
+   map.updateChoropleth({"POL": grayValues[getDailyValue(111,tradingDay)] });  
+   map.updateChoropleth({"SRB": grayValues[getDailyValue(112,tradingDay)] });  
+   map.updateChoropleth({"SVK": grayValues[getDailyValue(113,tradingDay)] });  
+   map.updateChoropleth({"SVN": grayValues[getDailyValue(114,tradingDay)] });  
+   map.updateChoropleth({"ESP": grayValues[getDailyValue(115,tradingDay)] });  
+   map.updateChoropleth({"SWE": grayValues[getDailyValue(116,tradingDay)] });  
+   map.updateChoropleth({"CHE": grayValues[getDailyValue(117,tradingDay)] });  
+   map.updateChoropleth({"TUN": grayValues[getDailyValue(118,tradingDay)] });  
+}
+
+function zone12() {
+   map.updateChoropleth({"BFA": grayValues[getDailyValue(119,tradingDay)] });  
+   map.updateChoropleth({"GMB": grayValues[getDailyValue(120,tradingDay)] });  
+   map.updateChoropleth({"GHA": grayValues[getDailyValue(121,tradingDay)] });  
+   map.updateChoropleth({"GIN": grayValues[getDailyValue(122,tradingDay)] });  
+   map.updateChoropleth({"GNB": grayValues[getDailyValue(123,tradingDay)] });  
+   map.updateChoropleth({"ISL": grayValues[getDailyValue(124,tradingDay)] });  
+   map.updateChoropleth({"IRL": grayValues[getDailyValue(125,tradingDay)] });  
+   map.updateChoropleth({"CIV": grayValues[getDailyValue(126,tradingDay)] });  
+   map.updateChoropleth({"LBR": grayValues[getDailyValue(127,tradingDay)] });  
+   map.updateChoropleth({"MLI": grayValues[getDailyValue(128,tradingDay)] });  
+   map.updateChoropleth({"MRT": grayValues[getDailyValue(129,tradingDay)] });  
+   map.updateChoropleth({"MAR": grayValues[getDailyValue(130,tradingDay)] });  
+   map.updateChoropleth({"PRT": grayValues[getDailyValue(131,tradingDay)] });  
+   map.updateChoropleth({"SEN": grayValues[getDailyValue(132,tradingDay)] });  
+   map.updateChoropleth({"SLE": grayValues[getDailyValue(133,tradingDay)] });  
+   map.updateChoropleth({"TGO": grayValues[getDailyValue(134,tradingDay)] });  
+   map.updateChoropleth({"GBR": grayValues[getDailyValue(135,tradingDay)] });  
+   map.updateChoropleth({"ESH": grayValues[getDailyValue(136,tradingDay)] });  
+}
+ 
+function zone9() {
+   map.updateChoropleth({"ARG": grayValues[getDailyValue(137,tradingDay)] });  
+   map.updateChoropleth({"BRA": grayValues[getDailyValue(138,tradingDay)] });  
+   map.updateChoropleth({"FLK": grayValues[getDailyValue(139,tradingDay)] });  
+   map.updateChoropleth({"GUF": grayValues[getDailyValue(140,tradingDay)] });  
+   map.updateChoropleth({"SUR": grayValues[getDailyValue(141,tradingDay)] });  
+   map.updateChoropleth({"GRL": grayValues[getDailyValue(142,tradingDay)] });  
+   map.updateChoropleth({"URY": grayValues[getDailyValue(143,tradingDay)] });  
+}    
+    
+function zone8() {
+   map.updateChoropleth({"BOL": grayValues[getDailyValue(144,tradingDay)] });  
+   map.updateChoropleth({"CHL": grayValues[getDailyValue(145,tradingDay)] });  
+   map.updateChoropleth({"DOM": grayValues[getDailyValue(146,tradingDay)] });  
+   map.updateChoropleth({"GUY": grayValues[getDailyValue(147,tradingDay)] });  
+   map.updateChoropleth({"PRY": grayValues[getDailyValue(148,tradingDay)] });  
+   map.updateChoropleth({"PRI": grayValues[getDailyValue(149,tradingDay)] });  
+   map.updateChoropleth({"TTO": grayValues[getDailyValue(150,tradingDay)] });  
+   map.updateChoropleth({"VEN": grayValues[getDailyValue(151,tradingDay)] });  
+}    
+
+function zone7() {
+   map.updateChoropleth({"BHS": grayValues[getDailyValue(152,tradingDay)] });  
+   map.updateChoropleth({"CAN": grayValues[getDailyValue(153,tradingDay)] });  
+   map.updateChoropleth({"COL": grayValues[getDailyValue(154,tradingDay)] });  
+   map.updateChoropleth({"CUB": grayValues[getDailyValue(155,tradingDay)] });  
+   map.updateChoropleth({"ECU": grayValues[getDailyValue(156,tradingDay)] });  
+   map.updateChoropleth({"HTI": grayValues[getDailyValue(157,tradingDay)] });  
+   map.updateChoropleth({"JAM": grayValues[getDailyValue(158,tradingDay)] });  
+   map.updateChoropleth({"PAN": grayValues[getDailyValue(159,tradingDay)] });  
+   map.updateChoropleth({"PER": grayValues[getDailyValue(160,tradingDay)] });  
+   map.updateChoropleth({"USA": grayValues[getDailyValue(161,tradingDay)] });  
+}    
+
+function zone6() {
+   map.updateChoropleth({"BLZ": grayValues[getDailyValue(162,tradingDay)] });  
+   map.updateChoropleth({"CRI": grayValues[getDailyValue(163,tradingDay)] });  
+   map.updateChoropleth({"SLV": grayValues[getDailyValue(164,tradingDay)] });  
+   map.updateChoropleth({"GTM": grayValues[getDailyValue(165,tradingDay)] });  
+   map.updateChoropleth({"HND": grayValues[getDailyValue(166,tradingDay)] });  
+   map.updateChoropleth({"MEX": grayValues[getDailyValue(167,tradingDay)] });  
+   map.updateChoropleth({"NIC": grayValues[getDailyValue(168,tradingDay)] });  
+}    
+
+        
+function myTimer() {
+    var d = new Date();
+    document.getElementById("displayDate").innerHTML = dayValues[tradingDay];
+
+ //   document.getElementById("demo").innerHTML = d.toLocaleTimeString();
+    switch(tzDisplay)
+    {
+        case 24:
+            zone24();
+            tzDisplay--;
+            break;
+        case 23:
+            zone23();
+            tzDisplay--;
+            break;
+        case 22:
+            zone22();
+            tzDisplay--;
+            break;
+        case 21:
+            zone21();
+            tzDisplay--;
+            break;
+        case 20:
+            zone20();
+            tzDisplay--;
+            break;
+        case 19:
+            zone19();
+            tzDisplay--;
+            break;
+        case 18:
+            zone18();
+            tzDisplay--;
+            break;
+        case 17:
+            zone17();
+            tzDisplay--;
+            break;
+        case 16:
+            zone16();
+            tzDisplay--;
+            break;
+        case 15:
+            zone15();
+            tzDisplay--;
+            break;
+        case 14:
+            zone14();
+            tzDisplay--;
+            break;
+        case 13:
+            zone13();
+            tzDisplay--;
+            break;
+        case 12:
+            zone12();
+            tzDisplay--;
+            break;
+        case 11:
+            tzDisplay--;
+            break;
+        case 10:
+            tzDisplay--;
+            break;
+        case 9:
+            zone9();
+            tzDisplay--;
+            break;
+        case 8:
+            zone8();
+            tzDisplay--;
+            break;
+        case 7:
+            zone7();
+            tzDisplay--;
+            break;
+        case 6:
+            zone6();
+            tzDisplay--;
+            break;
+        case 5:
+            tzDisplay--;
+            break;
+        case 4:
+            tzDisplay--;
+            break;
+        case 3:
+            tzDisplay--;
+            break;
+        case 2:
+            tzDisplay--;
+            break;
+        case 1:
+            tzDisplay = 24;
+            tradingDay++;
+            if (tradingDay >= xTradingDays) {
+                clearInterval(myVar);
+    }
+            break;
+        case 0:
+            tzDisplay = 24;
+            break;
+    }
+}
+</script>
+
+</body>
